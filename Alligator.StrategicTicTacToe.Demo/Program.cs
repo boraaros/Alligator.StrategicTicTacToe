@@ -14,15 +14,36 @@ namespace Alligator.StrategicTicTacToe.Demo
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Hello strategic tic-tac-toe demo!");
+            Console.WriteLine();
 
+            bool aiStep = true;
             var externalLogics = new Logics();
+            bool success = false;
+
+            while (!success)
+            {
+                Console.WriteLine("First move settings: [a] ai or [h] human");
+                string settings = Console.ReadLine();
+                if (settings == "a")
+                {
+                    aiStep = true;
+                    externalLogics.IsInverted = false;
+                    success = true;
+                }
+                else if (settings == "h")
+                {
+                    aiStep = false;
+                    externalLogics.IsInverted = true;
+                    success = true;
+                }
+            }
+
             var solverConfiguration = new SolverConfiguration();
             var solverFactory = new SolverFactory<Position, Cell>(externalLogics, solverConfiguration);
             ISolver<Cell> solver = solverFactory.Create();
 
             Position position = new Position();
             IList<Cell> history = new List<Cell>();
-            bool aiStep = true;
 
             while (!position.IsEnded)
             {
@@ -197,6 +218,11 @@ namespace Alligator.StrategicTicTacToe.Demo
                     Console.WriteLine("-----------------------");
                 }
             }
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("X-Stats for debug");
+            Console.WriteLine("Score: {0}", position.Score);
+            Console.WriteLine("Winning chances: {0}", string.Join("|", position.innerWinningChances));
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine(string.Join("-", Enumerable.Range(0, 13).Select(t => "=")));
         }
     }
