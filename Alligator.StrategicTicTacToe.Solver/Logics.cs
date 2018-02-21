@@ -6,6 +6,8 @@ namespace Alligator.StrategicTicTacToe.Solver
 {
     public class Logics : IExternalLogics<Position, Cell>
     {
+        public bool IsInverted;
+
         public Position CreateEmptyPosition()
         {
             return new Position();
@@ -18,7 +20,7 @@ namespace Alligator.StrategicTicTacToe.Solver
 
         public int StaticEvaluate(Position position)
         {
-            return position.Score;
+            return IsInverted ? -position.Score : position.Score;
         }
     }
 }

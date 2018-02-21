@@ -7,8 +7,25 @@ namespace Alligator.StrategicTicTacToe.Solver
 {
     public class Position : IPosition<Cell>
     {
+        public struct WinningChance
+        {
+            public double Own;
+            public double Opp;
+
+            public WinningChance (double own, double opp)
+	        {
+                Own = own;
+                Opp = opp;
+	        }
+
+            public override string ToString()
+            {
+                return string.Format("P[{0}#{1}]", Math.Round(Own, 3), Math.Round(Opp, 3));
+            }
+        }
+
         private bool hasWinner;
-        private bool isQuiet;
+        private IList<bool> isQuiet;
 
         private readonly Mark[] combinedBoard;
         private readonly Mark[][] innerBoards;
@@ -18,7 +35,7 @@ namespace Alligator.StrategicTicTacToe.Solver
         private const int HashParamsLength = 2 * 81 + 4;
         private readonly IHashing hashing = new ZobristHashing(HashParamsLength);
 
-        private double[] innerWinningChances;
+        public WinningChance[] innerWinningChances;
         private int score;
 
         private static readonly int[][] lines = new int[][]
@@ -36,7 +53,7 @@ namespace Alligator.StrategicTicTacToe.Solver
         public Position()
         {
             hasWinner = false;
-            isQuiet = true;
+            isQuiet = new List<bool> { true };
 
             innerBoards = new Mark[9][];
             for (int i = 0; i < 9; i++)
@@ -48,7 +65,7 @@ namespace Alligator.StrategicTicTacToe.Solver
 
             combinedBoard = new Mark[9];
 
-            innerWinningChances = Enumerable.Range(0, 9).Select(t => 0.5).ToArray();
+            innerWinningChances = Enumerable.Range(0, 9).Select(t => ComputeWinningChance(t)).ToArray();
             score = 0;
         }
 
@@ -68,7 +85,23 @@ namespace Alligator.StrategicTicTacToe.Solver
 
         public bool IsEnded
         {
-            get { return hasWinner || history.Count == 81; }
+            get { return hasWinner || IsFullTable(); }
+        }
+
+        private bool IsFullTable()
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                if (combinedBoard[i] != Mark.Empty)
+                {
+                    continue;
+                }
+                if (innerBoards[i].Any(t => t == Mark.Empty))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public bool HasWinner
@@ -78,7 +111,7 @@ namespace Alligator.StrategicTicTacToe.Solver
 
         public bool IsQuiet
         {
-            get { return isQuiet; }
+            get { return isQuiet[isQuiet.Count - 1]; }
         }
 
         public Mark[] CombinedBoard
@@ -111,7 +144,7 @@ namespace Alligator.StrategicTicTacToe.Solver
                 throw new InvalidOperationException(string.Format("Cannot mark, because target cell isn't empty: [{0},{1}]",
                     ply.BoardIndex, ply.CellIndex));
             }
-            if (history.Count > 0 && combinedBoard[history[history.Count - 1].CellIndex] == Mark.Empty && ply.BoardIndex != history[history.Count - 1].CellIndex)
+            if (history.Count > 0 && combinedBoard[history[history.Count - 1].CellIndex] == Mark.Empty && innerBoards[history[history.Count - 1].CellIndex].Any(t => t == Mark.Empty) && ply.BoardIndex != history[history.Count - 1].CellIndex)
             {
                 throw new InvalidOperationException(string.Format("Invalid target board: [{0},{1}]",
                     ply.BoardIndex, ply.CellIndex));
@@ -152,6 +185,7 @@ namespace Alligator.StrategicTicTacToe.Solver
             hashing.Modify(GetHashIndex(lastPly));
             innerWinningChances[lastPly.BoardIndex] = ComputeWinningChance(lastPly.BoardIndex);
             score = CalculateScore();
+            isQuiet.RemoveAt(isQuiet.Count - 1);
         }
 
         public IEnumerable<Cell> EnumerateStrategies()
@@ -178,7 +212,7 @@ namespace Alligator.StrategicTicTacToe.Solver
                         }
                     }
                 }
-                else
+                if (result.Count == 0)
                 {
                     for (int i = 0; i < 9; i++)
                     {
@@ -196,6 +230,7 @@ namespace Alligator.StrategicTicTacToe.Solver
                     }
                 }
             }
+
             return result;
         }
 
@@ -244,6 +279,11 @@ namespace Alligator.StrategicTicTacToe.Solver
             if (hasPartialWinner)
             {
                 combinedBoard[ply.BoardIndex] = nextMarkType;
+                isQuiet.Add(false);
+            }
+            else
+            {
+                isQuiet.Add(true);
             }
             hasWinner = HasWinner2(combinedBoard);
         }
@@ -257,29 +297,29 @@ namespace Alligator.StrategicTicTacToe.Solver
             return nextMarkType == Mark.X ? Mark.O : Mark.X;
         }
 
-        private int CalculateScore()
+        public int CalculateScore()
         {
             double own = 0.0;
             double opp = 0.0;
 
             foreach (var line in lines)
             {
-                own += innerWinningChances[line[0]] * innerWinningChances[line[1]] * innerWinningChances[line[2]];
-                opp += (1 - innerWinningChances[line[0]]) * (1 - innerWinningChances[line[1]]) * (1 - innerWinningChances[line[2]]);       
+                own += innerWinningChances[line[0]].Own * innerWinningChances[line[1]].Own * innerWinningChances[line[2]].Own;
+                opp += innerWinningChances[line[0]].Opp * innerWinningChances[line[1]].Opp * innerWinningChances[line[2]].Opp;       
             }
 
             return (int)(10000 * own - 10000 * opp);
         }
 
-        private double ComputeWinningChance(int index)
+        private WinningChance ComputeWinningChance(int index)
         {
             if (combinedBoard[index] == Mark.X)
             {
-                return 1.0;
+                return new WinningChance(1.0, 0.0);
             }
             else if (combinedBoard[index] == Mark.O)
             {
-                return 0.0;
+                return new WinningChance(0.0, 1.0);
             }
 
             int ownScore = 0;
@@ -308,7 +348,8 @@ namespace Alligator.StrategicTicTacToe.Solver
                 }
                 if (own == 0 && opp == 0)
                 {
-                    continue;
+                    ownScore += 1;
+                    oppScore += 1;
                 }
                 else if (own > 0 && opp > 0)
                 {
@@ -316,33 +357,38 @@ namespace Alligator.StrategicTicTacToe.Solver
                 }
                 else if (own == 2)
                 {
-                    ownScore += 4;
+                    ownScore += 400;
                 }
                 else if (opp == 2)
                 {
-                    oppScore += 4;
+                    oppScore += 400;
                 }
                 else if (own == 1)
                 {
-                    ownScore += 1;
+                    ownScore += 50;
                 }
                 else if (opp == 1)
                 {
-                    oppScore += 1;
+                    oppScore += 50;
                 }
             }
 
-            var res = 0.5 + (ownScore - oppScore) / 40.0;
+            if (ownScore == 0 && oppScore == 0)
+            {
+                return new WinningChance(0.0, 0.0);
+            }
+
+            var res = 0.5 + (ownScore - oppScore) / 2500.0;
 
             if (res > 1)
             {
-                return 1.0;
+                res = 1.0;
             }
             if (res < 0)
             {
-                return 0.0;
+                res = 0.0;
             }
-            return res;
+            return new WinningChance(res, 1 - res);
         }
     }
 }
