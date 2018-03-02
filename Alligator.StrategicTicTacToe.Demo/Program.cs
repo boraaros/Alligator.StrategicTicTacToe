@@ -39,7 +39,7 @@ namespace Alligator.StrategicTicTacToe.Demo
             }
 
             var solverConfiguration = new SolverConfiguration();
-            var solverFactory = new SolverFactory<Position, Cell>(externalLogics, solverConfiguration);
+            var solverFactory = new SolverFactory<Position, Cell>(externalLogics, solverConfiguration, SolverLog);
             ISolver<Cell> solver = solverFactory.Create();
 
             Position position = new Position();
@@ -224,6 +224,14 @@ namespace Alligator.StrategicTicTacToe.Demo
             Console.WriteLine("Winning chances: {0}", string.Join("|", position.innerWinningChances));
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine(string.Join("-", Enumerable.Range(0, 13).Select(t => "=")));
+        }
+
+        private static void SolverLog(string message)
+        {
+            var prevColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(string.Format("[SolverLog] {0}", message));
+            Console.ForegroundColor = prevColor;
         }
     }
 }
