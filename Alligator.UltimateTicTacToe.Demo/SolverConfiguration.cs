@@ -39,5 +39,10 @@ namespace Alligator.StrategicTicTacToe.Demo
         {
             get { return 1; }
         }
+
+        public int MinimumSearchDepthToUseMtdf
+        {
+            get { return 99; }
+        }
     }
 }
