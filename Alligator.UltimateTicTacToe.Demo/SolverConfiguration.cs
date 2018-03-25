@@ -1,13 +1,13 @@
 ﻿using Alligator.Solver;
 using System;
 
-namespace Alligator.StrategicTicTacToe.Demo
+namespace Alligator.UltimateTicTacToe.Demo
 {
     class SolverConfiguration : ISolverConfiguration
     {
         public TimeSpan TimeLimitPerMove
         {
-            get { return TimeSpan.FromSeconds(3); }
+            get { return TimeSpan.FromSeconds(20); }
         }
 
         public int SearchDepthLimit

@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Alligator.StrategicTicTacToe.Solver
+namespace Alligator.UltimateTicTacToe.Solver
 {
     public class Logics : IExternalLogics<Position, Cell>
     {
