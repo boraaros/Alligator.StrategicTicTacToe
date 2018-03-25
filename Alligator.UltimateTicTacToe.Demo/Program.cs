@@ -1,12 +1,12 @@
 ﻿using Alligator.Solver;
-using Alligator.StrategicTicTacToe.Solver;
+using Alligator.UltimateTicTacToe.Solver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Alligator.StrategicTicTacToe.Demo
+namespace Alligator.UltimateTicTacToe.Demo
 {
     class Program
     {

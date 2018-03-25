@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Alligator.StrategicTicTacToe.Solver
+namespace Alligator.UltimateTicTacToe.Solver
 {
     public enum Mark
     {
